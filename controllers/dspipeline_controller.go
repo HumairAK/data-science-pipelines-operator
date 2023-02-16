@@ -151,7 +151,7 @@ func (r *DSPipelineReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		dspipeline.APIVersion, dspipeline.Kind = gvk.Version, gvk.Kind
 	}
 
-	err = params.ExtractParams(dspipeline)
+	err = params.ExtractParams(ctx, dspipeline, r.Client, r.Log)
 	if err != nil {
 		log.Error(err, "Unable to parse CR spec, "+
 			"failed to reconcile, ensure CR is well formed")
@@ -180,12 +180,12 @@ func (r *DSPipelineReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, nil
 	}
 
-	usingCustomDB, err := params.UsingCustomDB(dspipeline)
+	usingCustomDB, err := params.UsingExternalDB(dspipeline)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
 
-	usingCustomStorage, err := params.UsingCustomStorage(dspipeline)
+	usingCustomStorage, err := params.UsingExternalStorage(dspipeline)
 	if err != nil {
 		return ctrl.Result{}, err
 	}

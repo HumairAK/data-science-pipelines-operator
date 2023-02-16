@@ -6,7 +6,19 @@ metadata:
 spec:
   apiServer:
     deploy: true
+    applyTektonCustomResource: true
+    archiveLogs: false
     image: quay.io/modh/odh-ml-pipelines-api-server-container:v1.18.0-8
+    artifactImage: quay.io/modh/odh-ml-pipelines-artifact-manager-container:v1.18.0-8
+    cacheImage: registry.access.redhat.com/ubi8/ubi-minimal
+    moveResultsImage: busybox
+    injectDefaultScript: true
+    stripEOF: true
+    terminateStatus: Cancelled
+    trackArtifacts: true
+    dbConfigConMaxLifetimeSec: 120
+    collectMetrics: true
+    autoUpdatePipelineDefaultVersion: true
     resources:
       requests:
         cpu: 250m
@@ -14,17 +26,17 @@ spec:
       limits:
         cpu: 500m
         memory: 1Gi
-    # optional (default is: ds-pipeline-artifact-script-${metadata.name} / artifact_script)
-    artifactScriptConfigMap:
-      name: ds-pipeline-artifact-script-sample
-      key: "artifact_script"
-    artifactImage: quay.io/modh/odh-ml-pipelines-artifact-manager-container:v1.18.0-8
-    dBConfigConMaxLifetimeSec: 120
-    collectMetrics: true
-  persistentAgent:
+
+    # optional (default is: ds-pipeline-artifact-script-${metadata.name})
+    # apiserver deployment will fail if the specified custom config does not exist
+    # if default name is used, the configmap will be over-written by the operator:
+
+    #  artifactScriptConfigMap:
+    #    name: YourConfigMapName
+    #    key: "artifact_script"
+  persistenceAgent:
     deploy: true
     image: quay.io/modh/odh-ml-pipelines-persistenceagent-container:v1.18.0-8
-    pipelineAPIServerName: apiserver
     numWorkers: 2  # Number of worker for sync job.
     resources:
       requests:
@@ -36,6 +48,7 @@ spec:
   scheduledWorkflow:
     deploy: true
     image: quay.io/modh/odh-ml-pipelines-scheduledworkflow-container:v1.18.0-8
+    cronScheduleTimezone: UTC
     resources:
       requests:
         cpu: 120m
@@ -46,6 +59,7 @@ spec:
   viewerCRD:
     deploy: true
     image: quay.io/modh/odh-ml-pipelines-viewercontroller-container:v1.18.0-8
+    maxNumViewer: 50
     resources:
       requests:
         cpu: 120m
@@ -65,7 +79,7 @@ spec:
         memory: 256Mi
     configMap: ds-pipeline-ui-configmap
   database:
-    mariadb:   # mutually exclusive with custom
+    mariaDB:   # mutually exclusive with custom
       deploy: true
       image: registry.redhat.io/rhel8/mariadb-103:1-188
       username: mlpipeline
@@ -120,31 +134,31 @@ status:
   # * MLPIpelinesUIReady is (Ready: True) OR is (Ready: False && DeploymentDisabled)
   conditions:
     - type: Ready
-      status: true
+      status: True
       observedGeneration: 4
       lastTransitionTime: '2023-02-02T21:00:00Z'
       reason: MinimumReplicasAvailable
       message: 'some message'
     - type: ApiServerReady
-      status: true
+      status: True
       observedGeneration: 4
       lastTransitionTime: '2023-02-02T21:00:00Z'
       reason: MinimumReplicasAvailable
       message: 'some message'
-    - status: true
-      type: MLPIpelinesUIReady
+    - type: MLPIpelinesUIReady
+      status: True
       observedGeneration: 4
       lastTransitionTime: '2023-02-02T21:00:00Z'
       reason: MinimumReplicasAvailable  # DeploymentDisabled
       message: 'some message'
-    - status: true
-      type: PersistenceAgentReady
+    - type: PersistenceAgentReady
+      status: True
       observedGeneration: 4
       lastTransitionTime: '2023-02-02T21:00:00Z'
       reason: MinimumReplicasAvailable
       message: 'some message'
-    - status: true
-      type: ScheduledWorkflowReady
+    - type: ScheduledWorkflowReady
+      status: True
       observedGeneration: 4
       lastTransitionTime: '2023-02-02T21:00:00Z'
       reason: MinimumReplicasAvailable
@@ -152,14 +166,14 @@ status:
     # Do we need to do this?? API Server application already
     # checks for db/storage connectivity, and pod will fail to come up
     # in such a case.
-    - status: false
-      type: DatabaseReady
+    - type: DatabaseReady
+      status: True
       observedGeneration: 4
       lastTransitionTime: '2023-02-02T21:00:00Z'
       reason: DataBaseUnreachable  # DataBaseFailedToDeploy, DataBaseReady
       message: '500 gateway error received'
-    - status: false
-      type: ObjectStorageReady
+    - type: ObjectStorageReady
+      status: True
       observedGeneration: 4
       lastTransitionTime: '2023-02-02T21:00:00Z'
       reason: ObjectStorageUnreachable  # ObjectStorageFailedToDeploy, ObjectStorageReady
