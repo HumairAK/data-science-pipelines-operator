@@ -28,7 +28,7 @@ import (
 )
 
 const (
-	dspcrcase1                  = "./testdata/deploy/case_2_standard_deploy.yaml"
+	dspcrcase1                  = "./testdata/deploy/cr.yaml"
 	apiserverDeployment         = "./testdata/results/case_2/apiserver/deployment.yaml"
 	mariadbDeployment           = "./testdata/results/case_2/mariadb/deployment.yaml"
 	minioDeployment             = "./testdata/results/case_2/minio/deployment.yaml"
