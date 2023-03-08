@@ -369,7 +369,8 @@ func (p *DSPAParams) ExtractParams(ctx context.Context, dsp *dspa.DataSciencePip
 
 		setResourcesDefault(config.APIServerResourceRequirements, &p.APIServer.Resources)
 
-		p.APIServerOauthProxyCookieSecret = passwordGen(12)
+		generatedPass := passwordGen(12)
+		p.APIServerOauthProxyCookieSecret = base64.StdEncoding.EncodeToString([]byte(generatedPass))
 
 		if p.APIServer.ArtifactScriptConfigMap == nil {
 			p.APIServer.ArtifactScriptConfigMap = &dspa.ArtifactScriptConfigMap{
@@ -395,7 +396,8 @@ func (p *DSPAParams) ExtractParams(ctx context.Context, dsp *dspa.DataSciencePip
 		setStringDefault(config.MLPipelineUIConfigMapPrefix+dsp.Name, &p.MlPipelineUI.ConfigMapName)
 		setResourcesDefault(config.MlPipelineUIResourceRequirements, &p.MlPipelineUI.Resources)
 
-		p.MlPipelineUIOauthProxyCookieSecret = passwordGen(12)
+		generatedPass := passwordGen(12)
+		p.MlPipelineUIOauthProxyCookieSecret = base64.StdEncoding.EncodeToString([]byte(generatedPass))
 	}
 
 	err := p.SetupDBParams(ctx, dsp, client, log)

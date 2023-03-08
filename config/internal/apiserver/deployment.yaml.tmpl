@@ -27,7 +27,7 @@ spec:
             - --upstream=http://localhost:8888
             - --tls-cert=/etc/tls/private/tls.crt
             - --tls-key=/etc/tls/private/tls.key
-            - --cookie-secret-file=cookie_secret
+            - --cookie-secret-file=/etc/oauth/config/cookie_secret
             - '--openshift-delegate-urls={"/": {"group":"route.openshift.io","resource":"routes","verb":"get","name":"ds-pipeline-{{.Name}}","namespace":"{{.Namespace}}"}}'
             - '--openshift-sar={"namespace":"{{.Namespace}}","resource":"routes","resourceName":"ds-pipeline-{{.Name}}","verb":"get","resourceAPIGroup":"route.openshift.io"}'
             - --skip-auth-regex='(^/metrics|^/apis/v1beta1/healthz)'
@@ -65,7 +65,7 @@ spec:
           volumeMounts:
             - mountPath: /etc/tls/private
               name: proxy-tls
-            - mountPath: /etc/oauth/config/cookie_secret
+            - mountPath: /etc/oauth/config
               name: cookie-secret
         {{ end }}
         - env:

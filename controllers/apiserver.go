@@ -58,26 +58,31 @@ func (r *DSPAReconciler) ReconcileAPIServer(ctx context.Context, dsp *dspav1alph
 		}
 	}
 
+	cookieSecret := &corev1.Secret{}
+	cookieSecretNN := types.NamespacedName{
+		Name:      fmt.Sprintf("ds-pipelines-%s-cookie-secret", dsp.Name),
+		Namespace: dsp.Namespace,
+	}
+
 	if dsp.Spec.APIServer.EnableRoute {
 		err := r.Apply(dsp, params, serverRoute)
 		if err != nil {
 			return err
 		}
-
-		secret := &corev1.Secret{}
-		namespacedNamed := types.NamespacedName{
-			Name:      fmt.Sprintf("ds-pipelines-%s-cookie-secret", dsp.Name),
-			Namespace: dsp.Namespace,
-		}
-		err = r.CreateIfDoesNotItExists(ctx, secret, namespacedNamed, params, apiServerCookieSecret, dsp)
+		err = r.CreateIfDoesNotItExists(ctx, cookieSecret, cookieSecretNN, params, apiServerCookieSecret, dsp)
 		if err != nil {
 			return err
 		}
 
 	} else {
 		route := &routev1.Route{}
-		namespacedNamed := types.NamespacedName{Name: "ds-pipeline-" + dsp.Name, Namespace: dsp.Namespace}
-		err := r.DeleteResourceIfItExists(ctx, route, namespacedNamed)
+		routeNN := types.NamespacedName{Name: "ds-pipeline-" + dsp.Name, Namespace: dsp.Namespace}
+		err := r.DeleteResourceIfItExists(ctx, route, routeNN)
+		if err != nil {
+			return err
+		}
+
+		err = r.DeleteResourceIfItExists(ctx, cookieSecret, cookieSecretNN)
 		if err != nil {
 			return err
 		}

@@ -53,12 +53,12 @@ func (r *DSPAReconciler) ReconcileUI(ctx context.Context, dsp *dspav1alpha1.Data
 		}
 	}
 
-	secret := &corev1.Secret{}
-	namespacedNamed := types.NamespacedName{
+	cookieSecret := &corev1.Secret{}
+	cookieSecretNN := types.NamespacedName{
 		Name:      fmt.Sprintf("ds-pipelines-ui-%s-cookie-secret", dsp.Name),
 		Namespace: dsp.Namespace,
 	}
-	err := r.CreateIfDoesNotItExists(ctx, secret, namespacedNamed, params, mlPipelinesUICookieSecret, dsp)
+	err := r.CreateIfDoesNotItExists(ctx, cookieSecret, cookieSecretNN, params, mlPipelinesUICookieSecret, dsp)
 	if err != nil {
 		return err
 	}
