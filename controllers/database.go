@@ -30,6 +30,7 @@ var dbTemplates = []string{
 
 func (r *DSPAReconciler) ReconcileDatabase(ctx context.Context, dsp *dspav1alpha1.DataSciencePipelinesApplication,
 	params *DSPAParams) error {
+	log := r.Log.WithValues("namespace", dsp.Namespace)
 
 	// If no database was specified, DSPO will deploy mariaDB by default
 	// As such DSPO needs to update the CR with the state of the mariaDB
@@ -44,18 +45,18 @@ func (r *DSPAReconciler) ReconcileDatabase(ctx context.Context, dsp *dspav1alpha
 	}
 
 	if !dsp.Spec.Database.MariaDB.Deploy {
-		r.Log.Info("Skipping Application of MariaDB Resources")
+		log.Info("Skipping Application of MariaDB Resources")
 		return nil
 	}
 
-	r.Log.Info("Applying Database Resources")
+	log.Info("Applying Database Resources")
 	for _, template := range dbTemplates {
 		err := r.Apply(dsp, params, template)
 		if err != nil {
 			return err
 		}
 	}
-	r.Log.Info("Finished applying Database Resources")
+	log.Info("Finished applying Database Resources")
 
 	return nil
 }

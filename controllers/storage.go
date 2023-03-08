@@ -30,6 +30,7 @@ var storageTemplates = []string{
 
 func (r *DSPAReconciler) ReconcileStorage(ctx context.Context, dsp *dspav1alpha1.DataSciencePipelinesApplication,
 	params *DSPAParams) error {
+	log := r.Log.WithValues("namespace", dsp.Namespace)
 
 	// If no storage was specified, DSPO will deploy minio by default
 	// As such DSPO needs to update the CR with the state of minio
@@ -44,11 +45,11 @@ func (r *DSPAReconciler) ReconcileStorage(ctx context.Context, dsp *dspav1alpha1
 	}
 
 	if !dsp.Spec.ObjectStorage.Minio.Deploy {
-		r.Log.Info("Skipping Application of ObjectStorage Resources")
+		log.Info("Skipping Application of ObjectStorage Resources")
 		return nil
 	}
 
-	r.Log.Info("Applying Storage Resources")
+	log.Info("Applying Storage Resources")
 
 	for _, template := range storageTemplates {
 		err := r.Apply(dsp, params, template)
@@ -57,6 +58,6 @@ func (r *DSPAReconciler) ReconcileStorage(ctx context.Context, dsp *dspav1alpha1
 		}
 	}
 
-	r.Log.Info("Finished applying Storage Resources")
+	log.Info("Finished applying Storage Resources")
 	return nil
 }

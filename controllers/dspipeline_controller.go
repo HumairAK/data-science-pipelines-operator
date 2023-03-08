@@ -196,7 +196,7 @@ func (r *DSPAReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		}
 	} else {
 		if controllerutil.ContainsFinalizer(dspa, finalizerName) {
-			if err := r.cleanUpResources(ctx, req, dspa, params); err != nil {
+			if err := r.cleanUpResources(params); err != nil {
 				return ctrl.Result{}, err
 			}
 			controllerutil.RemoveFinalizer(dspa, finalizerName)
@@ -278,7 +278,7 @@ func (r *DSPAReconciler) SetupWithManager(mgr ctrl.Manager) error {
 }
 
 // Clean Up any resources not handled by garbage collection, like Cluster ResourceRequirements
-func (r *DSPAReconciler) cleanUpResources(ctx context.Context, req ctrl.Request, dsp *dspav1alpha1.DataSciencePipelinesApplication, params *DSPAParams) error {
+func (r *DSPAReconciler) cleanUpResources(params *DSPAParams) error {
 	err := r.CleanUpCommon(params)
 	if err != nil {
 		return err

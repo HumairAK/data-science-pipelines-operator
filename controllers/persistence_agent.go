@@ -29,13 +29,14 @@ var persistenceAgentTemplates = []string{
 
 func (r *DSPAReconciler) ReconcilePersistenceAgent(dsp *dspav1alpha1.DataSciencePipelinesApplication,
 	params *DSPAParams) error {
+	log := r.Log.WithValues("namespace", dsp.Namespace)
 
 	if !dsp.Spec.PersistenceAgent.Deploy {
-		r.Log.Info("Skipping Application of PersistenceAgent Resources")
+		log.Info("Skipping Application of PersistenceAgent Resources")
 		return nil
 	}
 
-	r.Log.Info("Applying PersistenceAgent Resources")
+	log.Info("Applying PersistenceAgent Resources")
 
 	for _, template := range persistenceAgentTemplates {
 		err := r.Apply(dsp, params, template)
@@ -44,6 +45,6 @@ func (r *DSPAReconciler) ReconcilePersistenceAgent(dsp *dspav1alpha1.DataScience
 		}
 	}
 
-	r.Log.Info("Finished applying PersistenceAgent Resources")
+	log.Info("Finished applying PersistenceAgent Resources")
 	return nil
 }

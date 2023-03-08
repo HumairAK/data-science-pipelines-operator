@@ -43,13 +43,14 @@ const serverRoute = "apiserver/route.yaml.tmpl"
 const apiServerCookieSecret = "apiserver/secret.yaml.tmpl"
 
 func (r *DSPAReconciler) ReconcileAPIServer(ctx context.Context, dsp *dspav1alpha1.DataSciencePipelinesApplication, params *DSPAParams) error {
+	log := r.Log.WithValues("namespace", dsp.Namespace)
 
 	if !dsp.Spec.APIServer.Deploy {
-		r.Log.Info("Skipping Application of APIServer Resources")
+		log.Info("Skipping Application of APIServer Resources")
 		return nil
 	}
 
-	r.Log.Info("Applying APIServer Resources")
+	log.Info("Applying APIServer Resources")
 
 	for _, template := range apiServerTemplates {
 		err := r.Apply(dsp, params, template)
@@ -88,6 +89,6 @@ func (r *DSPAReconciler) ReconcileAPIServer(ctx context.Context, dsp *dspav1alph
 		}
 	}
 
-	r.Log.Info("Finished applying APIServer Resources")
+	log.Info("Finished applying APIServer Resources")
 	return nil
 }

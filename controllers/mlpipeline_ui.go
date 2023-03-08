@@ -39,13 +39,14 @@ const mlPipelinesUICookieSecret = "mlpipelines-ui/secret.yaml.tmpl"
 
 func (r *DSPAReconciler) ReconcileUI(ctx context.Context, dsp *dspav1alpha1.DataSciencePipelinesApplication,
 	params *DSPAParams) error {
+	log := r.Log.WithValues("namespace", dsp.Namespace)
 
 	if !dsp.Spec.MlPipelineUI.Deploy {
-		r.Log.Info("Skipping Application of MlPipelineUI Resources")
+		log.Info("Skipping Application of MlPipelineUI Resources")
 		return nil
 	}
 
-	r.Log.Info("Applying MlPipelineUI Resources")
+	log.Info("Applying MlPipelineUI Resources")
 	for _, template := range mlPipelineUITemplates {
 		err := r.Apply(dsp, params, template)
 		if err != nil {
@@ -63,6 +64,6 @@ func (r *DSPAReconciler) ReconcileUI(ctx context.Context, dsp *dspav1alpha1.Data
 		return err
 	}
 
-	r.Log.Info("Applying MlPipelineUI Resources")
+	log.Info("Applying MlPipelineUI Resources")
 	return nil
 }

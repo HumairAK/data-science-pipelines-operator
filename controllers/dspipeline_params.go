@@ -345,7 +345,9 @@ func setResourcesDefault(defaultValue dspa.ResourceRequirements, value **dspa.Re
 	}
 }
 
-func (p *DSPAParams) ExtractParams(ctx context.Context, dsp *dspa.DataSciencePipelinesApplication, client client.Client, log logr.Logger) error {
+func (p *DSPAParams) ExtractParams(ctx context.Context, dsp *dspa.DataSciencePipelinesApplication, client client.Client, logger logr.Logger) error {
+	log := logger.WithValues("namespace", dsp.Namespace)
+
 	p.Name = dsp.Name
 	p.Namespace = dsp.Namespace
 	p.Owner = dsp
