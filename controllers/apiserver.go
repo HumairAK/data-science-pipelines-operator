@@ -17,8 +17,10 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	dspav1alpha1 "github.com/opendatahub-io/data-science-pipelines-operator/api/v1alpha1"
-	v1 "github.com/openshift/api/route/v1"
+	routev1 "github.com/openshift/api/route/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
 
@@ -34,9 +36,11 @@ var apiServerTemplates = []string{
 	"apiserver/deployment.yaml.tmpl",
 }
 
-// serverRoute is a resource deployed conditionally
-// as such it is handled separately
+// Resources that are deployed conditionally
+// as such they are handled separately
+
 const serverRoute = "apiserver/route.yaml.tmpl"
+const apiServerCookieSecret = "apiserver/secret.yaml.tmpl"
 
 func (r *DSPAReconciler) ReconcileAPIServer(ctx context.Context, dsp *dspav1alpha1.DataSciencePipelinesApplication, params *DSPAParams) error {
 
@@ -59,8 +63,19 @@ func (r *DSPAReconciler) ReconcileAPIServer(ctx context.Context, dsp *dspav1alph
 		if err != nil {
 			return err
 		}
+
+		secret := &corev1.Secret{}
+		namespacedNamed := types.NamespacedName{
+			Name:      fmt.Sprintf("ds-pipelines-%s-cookie-secret", dsp.Name),
+			Namespace: dsp.Namespace,
+		}
+		err = r.CreateIfDoesNotItExists(ctx, secret, namespacedNamed, params, apiServerCookieSecret, dsp)
+		if err != nil {
+			return err
+		}
+
 	} else {
-		route := &v1.Route{}
+		route := &routev1.Route{}
 		namespacedNamed := types.NamespacedName{Name: "ds-pipeline-" + dsp.Name, Namespace: dsp.Namespace}
 		err := r.DeleteResourceIfItExists(ctx, route, namespacedNamed)
 		if err != nil {
