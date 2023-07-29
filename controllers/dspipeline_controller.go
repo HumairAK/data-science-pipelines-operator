@@ -43,7 +43,7 @@ import (
 
 const finalizerName = "datasciencepipelinesapplications.opendatahub.io/finalizer"
 
-// DSPAReconciler reconciles a DSPAParams object
+// DSPAReconciler reconciles a DSPAParams object.
 type DSPAReconciler struct {
 	client.Client
 	Scheme        *runtime.Scheme
