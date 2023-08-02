@@ -24,13 +24,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: ./.github/actions/build
+      - name: Build Image
+        uses: ./.github/actions/build
         with:
           OVERWRITE: true
           IMAGE_REPO: ${{ env.IMAGE_REPO_DSPO }}
           DOCKERFILE: Dockerfile
           GH_REPO: ${{ github.repository }}
-      - name: Post build
+      - name: Send comment
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.ACCESS_TOKEN }}
