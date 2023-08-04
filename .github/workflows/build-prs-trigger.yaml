@@ -10,14 +10,19 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 jobs:
-  build:
+  upload-data:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - name: Save PR payload
+        shell: bash
         run: |
-          echo ${{ toJSON(github.event.pull_request) }}
+          mkdir -p ./pr
+          echo ${{ github.event.pull_request.number }} >> ./pr/pr_number
+          echo ${{ github.event.pull_request.state }} >> ./pr/pr_state
+          echo ${{ github.event.pull_request.head.sha }} >> ./pr/head_sha
+          echo ${{ github.event.action }} >> ./pr/event_action
       - uses: actions/upload-artifact@v2
         with:
-          name: variables
-          path: vars.csv
+          name: pr
+          path: pr/
