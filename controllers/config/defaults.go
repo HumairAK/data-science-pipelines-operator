@@ -20,6 +20,7 @@ import (
 	dspav1alpha1 "github.com/opendatahub-io/data-science-pipelines-operator/api/v1alpha1"
 	"github.com/spf13/viper"
 	"k8s.io/apimachinery/pkg/api/resource"
+	"time"
 )
 
 const (
@@ -102,6 +103,9 @@ var requiredFields = []string{
 	MariaDBImagePath,
 	OAuthProxyImagePath,
 }
+
+// Default DB/Object storage healthcheck timeout
+const DefaultConnectionTimeout = time.Second * 15
 
 func GetConfigRequiredFields() []string {
 	return requiredFields
