@@ -145,13 +145,19 @@ spec:
               memory: {{.APIServer.Resources.Limits.Memory}}
               {{ end }}
             {{ end }}
-          {{ if .APIServer.EnableSamplePipeline }}
+          {{ if or .APIServer.EnableSamplePipeline .APIServer.CABundle }}
           volumeMounts:
+            {{ if .APIServer.EnableSamplePipeline }}
             - name: sample-config
               mountPath: /config/sample_config.json
               subPath: sample_config.json
             - name: sample-pipeline
               mountPath: /samples/
+            {{ end }}
+            {{ if .APIServer.CABundle }}
+            - mountPath: /etc/pki/tls/certs/
+              name: ca-bundle
+            {{ end }}
           {{ end }}
         {{ if .APIServer.EnableRoute }}
         - name: oauth-proxy
@@ -206,6 +212,16 @@ spec:
         - name: proxy-tls
           secret:
             secretName: ds-pipelines-proxy-tls-{{.Name}}
+        {{ if .APIServer.CABundle }}
+        - name: ca-bundle
+          configMap:
+            name: {{ .APIServer.CABundle.ConfigMapName }}
+            items:
+            {{range $i, $configMapKey := .APIServer.CABundle.ConfigMapKeys}}
+              - key: {{ $configMapKey }}
+                path: {{ $configMapKey }}
+            {{end}}
+        {{ end }}
         {{ if .APIServer.EnableSamplePipeline }}
         - name: sample-config
           configMap:
