@@ -155,7 +155,7 @@ spec:
               mountPath: /samples/
             {{ end }}
             {{ if .APIServer.CABundle }}
-            - mountPath: /etc/pki/tls/certs/
+            - mountPath: /etc/pki/tls/certs
               name: ca-bundle
             {{ end }}
           {{ end }}
