@@ -194,9 +194,7 @@ spec:
           configMap:
             name: custom-ca-bundles
             items:
-              - key: cabundle1.crt
-                path: cabundle1.crt
-              - key: cabundle2.crt
-                path: cabundle2.crt
+              - key: cabundle.crt
+                path: cabundle.crt
             defaultMode: 420
       serviceAccountName: ds-pipeline-testdsp6

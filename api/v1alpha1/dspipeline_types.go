@@ -114,10 +114,10 @@ type APIServer struct {
 type CABundle struct {
 	// +kubebuilder:validation:Required
 	ConfigMapName string `json:"configMapName"`
-	// Each Key should map to a CA bundle. Keys are also used to name
-	// the CA bundle files (e.g. ca-bundle.crt)
+	// Key should map to a CA bundle. The key is also used to name
+	// the CA bundle file (e.g. ca-bundle.crt)
 	// +kubebuilder:validation:Required
-	ConfigMapKeys []string `json:"configMapKeys"`
+	ConfigMapKey string `json:"configMapKey"`
 }
 
 type ArtifactScriptConfigMap struct {
