@@ -7,3 +7,4 @@ resources:
 - aggregate_dspa_role.yaml
 - argo_role.yaml
 - argo_role_binding.yaml
+- multi-user

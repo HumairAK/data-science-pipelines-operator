@@ -7,5 +7,5 @@ patchesStrategicMerge:
 - img_patch.yaml
 images:
 - name: controller
-  newName: quay.io/opendatahub/data-science-pipelines-operator
-  newTag: main
+  newName: quay.io/hukhan/data-science-pipelines-operator
+  newTag: argo-multi-user-6

@@ -36,7 +36,7 @@ data:
       secretKeySecret:
         name: "{{.ObjectStorageConnection.CredentialsSecret.SecretName}}"
         key: "{{.ObjectStorageConnection.CredentialsSecret.SecretKey}}"
-  containerRuntimeExecutor: emissary  # TODO
+  containerRuntimeExecutor: emissary
   executor: |
-    imagePullPolicy: IfNotPresent  # TODO
+    imagePullPolicy: IfNotPresent
 

@@ -25,6 +25,7 @@ import (
 )
 
 const (
+	//
 	DefaultImageValue = "MustSetInConfig"
 
 	MLPipelineUIConfigMapPrefix       = "ds-pipeline-ui-configmap-"

@@ -24,6 +24,12 @@ spec:
     spec:
       containers:
         - env:
+            - name: ENABLE_AUTHZ
+              value: "true"
+            - name: KUBEFLOW_USERID_HEADER
+              value: X-Forwarded-User
+            - name: KUBEFLOW_USERID_PREFIX
+              value: ""
             - name: VIEWER_TENSORBOARD_POD_TEMPLATE_SPEC_PATH
               value: /etc/config/viewer-pod-template.json
             - name: MINIO_NAMESPACE
@@ -116,6 +122,7 @@ spec:
             - '--openshift-delegate-urls={"/": {"group":"route.openshift.io","resource":"routes","verb":"get","name":"ds-pipeline-ui-{{.Name}}","namespace":"{{.Namespace}}"}}'
             - '--openshift-sar={"namespace":"{{.Namespace}}","resource":"routes","resourceName":"ds-pipeline-ui-{{.Name}}","verb":"get","resourceAPIGroup":"route.openshift.io"}'
             - --skip-auth-regex='(^/metrics|^/apis/v1beta1/healthz)'
+            - --pass-user-headers=true # Header: X-Forwarded-User
           image: {{.OAuthProxy}}
           ports:
             - containerPort: 8443
