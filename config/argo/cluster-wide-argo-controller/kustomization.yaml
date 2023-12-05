@@ -1,0 +1,8 @@
+namespace: argo
+resources:
+- rbac.authorization.k8s.io_v1_role_argo-role.yaml
+- apps_v1_deployment_workflow-controller.yaml
+- rbac.authorization.k8s.io_v1_rolebinding_argo-binding.yaml
+- v1_service_workflow-controller-metrics.yaml
+- UPDATEME.yaml
+- ADDS3INFO.yaml

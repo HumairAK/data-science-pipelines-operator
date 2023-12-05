@@ -1,0 +1,7 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- rolebinding.yaml
+- pipeline-runner-sa.yaml
+- metadata-grpc.configmap.yaml
+- mlpipeline-minio-artifact.yaml

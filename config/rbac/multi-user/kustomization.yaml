@@ -1,0 +1,9 @@
+resources:
+- aggregates
+- argo
+#- cache
+#- not-needed
+- pa
+- server
+- swf
+- ui

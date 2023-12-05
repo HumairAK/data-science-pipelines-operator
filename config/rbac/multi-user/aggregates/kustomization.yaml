@@ -1,0 +1,10 @@
+resources:
+  - rbac.authorization.k8s.io_v1_clusterrole_aggregate-to-kubeflow-pipelines-edit.yaml
+  - rbac.authorization.k8s.io_v1_clusterrole_aggregate-to-kubeflow-pipelines-view.yaml
+#  - rbac.authorization.k8s.io_v1_clusterrole_kubeflow-pipelines-edit.yaml
+#  - rbac.authorization.k8s.io_v1_clusterrole_kubeflow-pipelines-view.yaml
+
+  - rbac.authorization.k8s.io_v1_clusterrole_argo-aggregate-to-admin.yaml
+  - rbac.authorization.k8s.io_v1_clusterrole_argo-aggregate-to-edit.yaml
+  - rbac.authorization.k8s.io_v1_clusterrole_argo-aggregate-to-view.yaml
+  - admin_oauth_proxy_access.yaml

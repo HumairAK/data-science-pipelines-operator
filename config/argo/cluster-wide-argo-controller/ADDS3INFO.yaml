@@ -1,0 +1,11 @@
+kind: Secret
+apiVersion: v1
+metadata:
+  name: mlpipeline-minio-artifact
+stringData:
+  accesskey: UJNJvHbzRQy7GngX
+  host: minio-sample.kubeflow.svc.cluster.local
+  port: "9000"
+  secretkey: RFnF02FfoFOklNlW9PYHQQXw
+  secure: "false"
+type: Opaque
