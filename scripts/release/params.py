@@ -1,16 +1,17 @@
 import sys
+from string import Template
 
 import requests
 
 QUAY_REPOS = {
-    "IMAGES_APISERVER":  "ds-pipelines-api-server",
-    "IMAGES_ARTIFACT":  "ds-pipelines-artifact-manager",
-    "IMAGES_PERSISTENTAGENT":  "ds-pipelines-persistenceagent",
-    "IMAGES_SCHEDULEDWORKFLOW":  "ds-pipelines-scheduledworkflow",
-    "IMAGES_MLMDENVOY":  "ds-pipelines-metadata-envoy",
-    "IMAGES_MLMDGRPC":  "ds-pipelines-metadata-grpc",
-    "IMAGES_MLMDWRITER":  "ds-pipelines-metadata-writer",
     "IMAGES_DSPO":  "data-science-pipelines-operator",
+    "IMAGESV2_ARGO_APISERVER":  "ds-pipelines-api-server",
+    "IMAGESV2_ARGO_PERSISTENCEAGENT":  "ds-pipelines-persistenceagent",
+    "IMAGESV2_ARGO_SCHEDULEDWORKFLOW":  "ds-pipelines-scheduledworkflow",
+    "IMAGESV2_ARGO_MLMDENVOY":  "ds-pipelines-metadata-envoy",
+    "IMAGESV2_ARGO_MLMDGRPC":  "ds-pipelines-metadata-grpc",
+    "V2_LAUNCHER_IMAGE":  "ds-pipelines-launcher",
+    "V2_DRIVER_IMAGE":  "ds-pipelines-driver",
 }
 
 ARCH = "amd64"
@@ -92,30 +93,22 @@ def generate_params(args):
         overrides[entry[0]] = entry[1]
 
     images = []
+    image_dict = {}
     # Fetch QUAY Images
     for image_env_var in QUAY_REPOS:
         if image_env_var in overrides:
             images.append(f"{image_env_var}={overrides[image_env_var]}")
+            image_dict[image_env_var] = f"{overrides[image_env_var]}"
         else:
             image_repo = QUAY_REPOS[image_env_var]
             digest = fetch_quay_repo_tag_digest(image_repo, quay_org, tag)
             image_repo_with_digest = f"{image_repo}@{digest}"
             images.append(f"{image_env_var}=quay.io/{quay_org}/{image_repo_with_digest}")
+            image_dict[image_env_var] = f"quay.io/{quay_org}/{image_repo_with_digest}"
 
     # Fetch RH Registry images
     rh_registry_images = {
-        RH_REGISTRY_ACCESS: [
-            {
-                "repo": REPO_UBI_MINIMAL,
-                "tag": ubi_minimal_tag,
-                "env": IMAGES_CACHE
-            },
-            {
-                "repo": REPO_UBI_MICRO,
-                "tag": ubi_micro_tag,
-                "env": IMAGES_MOVERESULTSIMAGE
-            },
-        ],
+        RH_REGISTRY_ACCESS: [],
         RH_REGISTRY_IO: [
             {
                 "repo": REPO_MARIADB,
@@ -134,10 +127,16 @@ def generate_params(args):
             image_env_var, tag, repo = img['env'], img['tag'], img['repo']
             if image_env_var in overrides:
                 images.append(f"{image_env_var}={overrides[image_env_var]}")
+                image_dict[image_env_var] = f"{overrides[image_env_var]}"
             else:
                 digest = fetch_rh_repo_tag_digest(repo, tag)
                 images.append(f"{image_env_var}={registry}/{repo}@{digest}")
+                image_dict[image_env_var] = f"{registry}/{repo}@{digest}"
 
-    with open(file_out, 'w') as f:
-        for images in images:
-            f.write(f"{images}\n")
+    with open('template/params.env', 'r') as f:
+        src = Template(f.read())
+        result = src.substitute(image_dict)
+        print(result)
+    # with open(file_out, 'w') as f:
+    #     for images in images:
+    #         f.write(f"{images}\n")
