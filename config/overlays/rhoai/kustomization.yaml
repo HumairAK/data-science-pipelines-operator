@@ -1,9 +1,10 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-- ../make-argodeploy
-- ../make-deploy
-namespace: opendatahub
+- ../../base
+- ../../argo
+namespace: redhat-ods-applications
+
 vars:
   - name: IMAGES_ARGO_SERVER
     objref:
@@ -12,3 +13,9 @@ vars:
       apiVersion: v1
     fieldref:
       fieldpath: data.IMAGES_ARGO_SERVER
+
+configMapGenerator:
+  - name: dspo-parameters
+    behavior: merge
+    envs:
+      - params.env
