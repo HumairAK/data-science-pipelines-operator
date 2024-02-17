@@ -65,6 +65,7 @@ type DBConnection struct {
 	DBName            string
 	CredentialsSecret *dspa.SecretKeyValue
 	Password          string
+	ExtraParams       string
 }
 
 type ObjectStorageConnection struct {
@@ -149,6 +150,9 @@ func (p *DSPAParams) SetupDBParams(ctx context.Context, dsp *dspa.DataSciencePip
 		p.DBConnection.Port = dsp.Spec.Database.ExternalDB.Port
 		p.DBConnection.Username = dsp.Spec.Database.ExternalDB.Username
 		p.DBConnection.DBName = dsp.Spec.Database.ExternalDB.DBName
+		// Assume default external connection is tls enabled
+		// user can override this via CustomExtraParams field
+		p.DBConnection.ExtraParams = fmt.Sprintf(config.DBDefaultExtraParams, true)
 		customCreds = dsp.Spec.Database.ExternalDB.PasswordSecret
 	} else {
 		// If no externalDB or mariaDB is specified, DSPO assumes
@@ -180,8 +184,15 @@ func (p *DSPAParams) SetupDBParams(ctx context.Context, dsp *dspa.DataSciencePip
 		p.DBConnection.Port = config.MariaDBHostPort
 		p.DBConnection.Username = p.MariaDB.Username
 		p.DBConnection.DBName = p.MariaDB.DBName
+		// By Default OOB mariadb is not tls enabled
+		p.DBConnection.ExtraParams = fmt.Sprintf(config.DBDefaultExtraParams, false)
 		if p.MariaDB.PasswordSecret != nil {
 			customCreds = p.MariaDB.PasswordSecret
+		}
+
+		// User specified custom Extra parameters will always take precedence
+		if dsp.Spec.Database.CustomExtraParams != nil {
+			p.DBConnection.ExtraParams = *dsp.Spec.Database.CustomExtraParams
 		}
 	}
 

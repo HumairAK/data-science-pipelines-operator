@@ -169,6 +169,13 @@ type MlPipelineUI struct {
 type Database struct {
 	*MariaDB    `json:"mariaDB,omitempty"`
 	*ExternalDB `json:"externalDB,omitempty"`
+
+	// +kubebuilder:validation:Optional
+	// CustomExtraParams allow users to further customize the sql dsn parameters: https://github.com/go-sql-driver/mysql?tab=readme-ov-file#dsn-data-source-name
+	// Value must be a JSON string. For example to disable tls the user can provide a string: {"tls":"true"}
+	// If updating post hoc DSPA deployment, then a manual restart of the pipeline server pod will be required so the new configmap maybe consumed.
+	CustomExtraParams *string `json:"customExtraParams,omitempty"`
+
 	// Default: false
 	// +kubebuilder:default:=false
 	// +kubebuilder:validation:Optional

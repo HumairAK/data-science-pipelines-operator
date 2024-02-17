@@ -177,6 +177,8 @@ spec:
                   DS Pipelines metadata tracking. Specify either the default MariaDB
                   deployment, or configure your own External SQL DB.
                 properties:
+                  customExtraParams:
+                    type: string
                   disableHealthCheck:
                     default: false
                     description: 'Default: false'
