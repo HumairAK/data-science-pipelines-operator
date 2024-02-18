@@ -189,11 +189,11 @@ func (p *DSPAParams) SetupDBParams(ctx context.Context, dsp *dspa.DataSciencePip
 		if p.MariaDB.PasswordSecret != nil {
 			customCreds = p.MariaDB.PasswordSecret
 		}
+	}
 
-		// User specified custom Extra parameters will always take precedence
-		if dsp.Spec.Database.CustomExtraParams != nil {
-			p.DBConnection.ExtraParams = *dsp.Spec.Database.CustomExtraParams
-		}
+	// User specified custom Extra parameters will always take precedence
+	if dsp.Spec.Database.CustomExtraParams != nil {
+		p.DBConnection.ExtraParams = *dsp.Spec.Database.CustomExtraParams
 	}
 
 	// Secret where DB credentials reside on cluster
