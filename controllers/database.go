@@ -36,7 +36,7 @@ var dbTemplates = []string{
 }
 
 // extract to var for mocking in testing
-var ConnectAndQueryDatabase = func(host, port, username, password, dbname string) bool {
+var ConnectAndQueryDatabase = func(host, port, username, password, dbname string) (bool, error) {
 	// Create a context with a timeout of 1 second
 	ctx, cancel := context.WithTimeout(context.Background(), config.DefaultDBConnectionTimeout)
 	defer cancel()
@@ -44,13 +44,16 @@ var ConnectAndQueryDatabase = func(host, port, username, password, dbname string
 	connectionString := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", username, password, host, port, dbname)
 	db, err := sql.Open("mysql", connectionString)
 	if err != nil {
-		return false
+		return false, err
 	}
 	defer db.Close()
 
 	testStatement := "SELECT 1;"
 	_, err = db.QueryContext(ctx, testStatement)
-	return err == nil
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 func (r *DSPAReconciler) isDatabaseAccessible(ctx context.Context, dsp *dspav1alpha1.DataSciencePipelinesApplication,
@@ -72,16 +75,21 @@ func (r *DSPAReconciler) isDatabaseAccessible(ctx context.Context, dsp *dspav1al
 	}
 
 	decodePass, _ := b64.StdEncoding.DecodeString(params.DBConnection.Password)
-	dbHealthCheckPassed := ConnectAndQueryDatabase(params.DBConnection.Host,
+	dbHealthCheckPassed, err := ConnectAndQueryDatabase(params.DBConnection.Host,
 		params.DBConnection.Port,
 		params.DBConnection.Username,
 		string(decodePass),
 		params.DBConnection.DBName)
+
+	if err != nil {
+		log.Info(fmt.Sprintf("Unable to connect to Database: %v", err))
+		return false
+	}
+
 	if dbHealthCheckPassed {
 		log.Info("Database Health Check Successful")
-	} else {
-		log.Info("Unable to connect to Database")
 	}
+
 	return dbHealthCheckPassed
 }
 
