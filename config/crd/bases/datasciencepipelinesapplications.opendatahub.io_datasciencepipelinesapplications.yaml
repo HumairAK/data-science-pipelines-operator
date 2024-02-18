@@ -178,6 +178,12 @@ spec:
                   deployment, or configure your own External SQL DB.
                 properties:
                   customExtraParams:
+                    description: 'CustomExtraParams allow users to further customize
+                      the sql dsn parameters: https://github.com/go-sql-driver/mysql?tab=readme-ov-file#dsn-data-source-name
+                      Value must be a JSON string. For example to disable tls the
+                      user can provide a string: {"tls":"true"} If updating post hoc
+                      DSPA deployment, then a manual restart of the pipeline server
+                      pod will be required so the new configmap maybe consumed.'
                     type: string
                   disableHealthCheck:
                     default: false
