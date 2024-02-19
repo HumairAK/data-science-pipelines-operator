@@ -18,7 +18,6 @@ package controllers
 
 import (
 	"context"
-	"crypto/x509"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -69,28 +68,6 @@ func createCredentialProvidersChain(accessKey, secretKey string) *credentials.Cr
 	return credentials.New(&credentials.Chain{Providers: providers})
 }
 
-func getHttpsTransportWithCACert(log logr.Logger, pemCerts []byte) (*http.Transport, error) {
-	transport, err := minio.DefaultTransport(true)
-	if err != nil {
-		return nil, fmt.Errorf("Error creating default transport : %s", err)
-	}
-
-	if transport.TLSClientConfig.RootCAs == nil {
-		pool, err := x509.SystemCertPool()
-		if err != nil {
-			log.Error(err, "error initializing TLS Pool: %s")
-			transport.TLSClientConfig.RootCAs = x509.NewCertPool()
-		} else {
-			transport.TLSClientConfig.RootCAs = pool
-		}
-	}
-
-	if ok := transport.TLSClientConfig.RootCAs.AppendCertsFromPEM(pemCerts); !ok {
-		return nil, fmt.Errorf("error parsing CA Certificate, ensure provided certs are in valid PEM format")
-	}
-	return transport, nil
-}
-
 var ConnectAndQueryObjStore = func(ctx context.Context, log logr.Logger, endpoint, bucket string, accesskey, secretkey []byte, secure bool, pemCerts []byte) bool {
 	cred := createCredentialProvidersChain(string(accesskey), string(secretkey))
 
@@ -100,7 +77,7 @@ var ConnectAndQueryObjStore = func(ctx context.Context, log logr.Logger, endpoin
 	}
 
 	if len(pemCerts) != 0 {
-		tr, err := getHttpsTransportWithCACert(log, pemCerts)
+		tr, err := util.GetHttpsTransportWithCACert(log, pemCerts)
 		if err != nil {
 			log.Error(err, "Encountered error when processing custom ca bundle.")
 			return false

@@ -20,6 +20,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"k8s.io/apimachinery/pkg/util/json"
 	"math/rand"
 	"time"
 
@@ -193,6 +194,13 @@ func (p *DSPAParams) SetupDBParams(ctx context.Context, dsp *dspa.DataSciencePip
 
 	// User specified custom Extra parameters will always take precedence
 	if dsp.Spec.Database.CustomExtraParams != nil {
+		// Validate CustomExtraParams is a valid params json
+		var validParamsJson map[string]string
+		err := json.Unmarshal([]byte(*dsp.Spec.Database.CustomExtraParams), &validParamsJson)
+		if err != nil {
+			log.Info(fmt.Sprintf("Encountered error when validationg CustomExtraParams field in DSPA, please ensure the params are well-formed: Error: %v", err))
+			return err
+		}
 		p.DBConnection.ExtraParams = *dsp.Spec.Database.CustomExtraParams
 	}
 
