@@ -21,12 +21,10 @@ import (
 	"crypto/x509"
 	"fmt"
 	"github.com/go-logr/logr"
-	"github.com/minio/minio-go/v7"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"net/http"
 	"net/url"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -63,28 +61,6 @@ func IsX509UnknownAuthorityError(err error) bool {
 	}
 	_, ok = urlErr.Err.(x509.UnknownAuthorityError)
 	return ok
-}
-
-func GetHttpsTransportWithCACert(log logr.Logger, pemCerts []byte) (*http.Transport, error) {
-	transport, err := minio.DefaultTransport(true)
-	if err != nil {
-		return nil, fmt.Errorf("Error creating default transport : %s", err)
-	}
-
-	if transport.TLSClientConfig.RootCAs == nil {
-		pool, err := x509.SystemCertPool()
-		if err != nil {
-			log.Error(err, "error initializing TLS Pool: %s")
-			transport.TLSClientConfig.RootCAs = x509.NewCertPool()
-		} else {
-			transport.TLSClientConfig.RootCAs = pool
-		}
-	}
-
-	if ok := transport.TLSClientConfig.RootCAs.AppendCertsFromPEM(pemCerts); !ok {
-		return nil, fmt.Errorf("error parsing CA Certificate, ensure provided certs are in valid PEM format")
-	}
-	return transport, nil
 }
 
 // GetConfigMapValue fetches the value for the provided configmap mapped to a given key

@@ -8,4 +8,4 @@ patchesStrategicMerge:
 images:
 - name: controller
   newName: quay.io/hukhan/data-science-pipelines-operator
-  newTag: RHOAIENG-1690-2385-2
+  newTag: RHOAIENG-1690-2385-4

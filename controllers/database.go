@@ -18,6 +18,7 @@ package controllers
 import (
 	"context"
 	cryptoTls "crypto/tls"
+	"crypto/x509"
 	"database/sql"
 	b64 "encoding/base64"
 	"fmt"
@@ -26,8 +27,8 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	dspav1alpha1 "github.com/opendatahub-io/data-science-pipelines-operator/api/v1alpha1"
 	"github.com/opendatahub-io/data-science-pipelines-operator/controllers/config"
-	"github.com/opendatahub-io/data-science-pipelines-operator/controllers/util"
 	"k8s.io/apimachinery/pkg/util/json"
+	"os"
 )
 
 const dbSecret = "mariadb/secret.yaml.tmpl"
@@ -40,50 +41,105 @@ var dbTemplates = []string{
 	dbSecret,
 }
 
-var ConnectAndQueryDatabase = func(host string, log logr.Logger, port, username, password, dbname string, tls string, pemCerts []byte) (bool, error) {
+func tLSClientConfig(log logr.Logger, pem []byte, serverName string) (*cryptoTls.Config, error) {
+	rootCertPool := x509.NewCertPool()
+
+	if f := os.Getenv("SSL_CERT_FILE"); f != "" {
+		data, err := os.ReadFile(f)
+		if err == nil {
+			rootCertPool.AppendCertsFromPEM(data)
+		}
+	}
+
+	if ok := rootCertPool.AppendCertsFromPEM(pem); !ok {
+		return nil, fmt.Errorf("error parsing CA Certificate, ensure provided certs are in valid PEM format")
+	}
+	tlsConfig := &cryptoTls.Config{
+		RootCAs: rootCertPool,
+	}
+	return tlsConfig, nil
+}
+
+func createMySQLConfig(user, password string, mysqlServiceHost string,
+	mysqlServicePort string, dbName string, mysqlExtraParams map[string]string) *mysql.Config {
+
+	params := map[string]string{
+		"charset":   "utf8",
+		"parseTime": "True",
+		"loc":       "Local",
+	}
+
+	for k, v := range mysqlExtraParams {
+		params[k] = v
+	}
+
+	return &mysql.Config{
+		User:                 user,
+		Passwd:               password,
+		Net:                  "tcp",
+		Addr:                 fmt.Sprintf("%s:%s", mysqlServiceHost, mysqlServicePort),
+		Params:               params,
+		DBName:               dbName,
+		AllowNativePasswords: true,
+	}
+}
+
+var ConnectAndQueryDatabase = func(host string, log logr.Logger, port, username, password, dbname string, pemCerts []byte, extraParams map[string]string, tls string) (bool, error) {
+	mysqlConfig := createMySQLConfig(
+		username,
+		password,
+		host,
+		port,
+		"",
+		extraParams,
+	)
+
 	// Create a context with a timeout of 1 second
 	ctx, cancel := context.WithTimeout(context.Background(), config.DefaultDBConnectionTimeout)
 	defer cancel()
 
 	var tlsConfig *cryptoTls.Config
-	var tlsConnectionSuffix = ""
 	switch tls {
 	case "false", "":
 		// don't set anything
 		break
 	case "true":
 		if len(pemCerts) != 0 {
-			tr, err := util.GetHttpsTransportWithCACert(log, pemCerts)
+			var err error
+			tlsConfig, err = tLSClientConfig(log, pemCerts, host)
 			if err != nil {
-				log.Error(err, "Encountered error when processing custom ca bundle.")
+				log.Info(fmt.Sprintf("Encountered error when processing custom ca bundle, Error: %v", err))
 				return false, err
 			}
-			tlsConfig = tr.TLSClientConfig
 		}
-		err := mysql.RegisterTLSConfig("custom", tlsConfig)
-		if err != nil {
-			return false, err
-		}
-		tlsConnectionSuffix = fmt.Sprintf("?tls=%s", tls)
 		break
 	case "skip-verify", "preferred":
 		tlsConfig = &cryptoTls.Config{InsecureSkipVerify: true}
-		tlsConnectionSuffix = fmt.Sprintf("?tls=%s", tls)
 		break
 	default:
 		// Unknown config, default to don't set anything
 		break
 	}
 
-	connectionString := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s%s", username, password, host, port, dbname, tlsConnectionSuffix)
-	db, err := sql.Open("mysql", connectionString)
+	if tlsConfig != nil {
+		err := mysql.RegisterTLSConfig("custom", tlsConfig)
+		// If ExtraParams{"tls": ".."} is set, that takes precedent over mysqlConfig.TLSConfig
+		// so we need to make sure we're setting our tls config to be used instead if it exists
+		if _, ok := mysqlConfig.Params["tls"]; ok {
+			mysqlConfig.Params["tls"] = "custom"
+		}
+		// Just to be safe, we also set it here, fallback from mysqlConfig.Params["tls"] not being set
+		mysqlConfig.TLSConfig = "custom"
+		if err != nil {
+			return false, err
+		}
+	}
+
+	db, err := sql.Open("mysql", mysqlConfig.FormatDSN())
 	if err != nil {
 		return false, err
 	}
 	defer db.Close()
-
-	// If external db, and custom params set and tls: false, not tls enabled
-	// if external db, and custom params set to skip-verify or preferred, then skip-verify
 
 	testStatement := "SELECT 1;"
 	_, err = db.QueryContext(ctx, testStatement)
@@ -140,8 +196,10 @@ func (r *DSPAReconciler) isDatabaseAccessible(ctx context.Context, dsp *dspav1al
 		params.DBConnection.Username,
 		string(decodePass),
 		params.DBConnection.DBName,
+		params.APICustomPemCerts,
+		extraParamsJson,
 		tls,
-		params.APICustomPemCerts)
+	)
 
 	if err != nil {
 		log.Info(fmt.Sprintf("Unable to connect to Database: %v", err))
