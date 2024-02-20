@@ -41,7 +41,7 @@ var dbTemplates = []string{
 	dbSecret,
 }
 
-func tLSClientConfig(log logr.Logger, pem []byte, serverName string) (*cryptoTls.Config, error) {
+func tLSClientConfig(pem []byte) (*cryptoTls.Config, error) {
 	rootCertPool := x509.NewCertPool()
 
 	if f := os.Getenv("SSL_CERT_FILE"); f != "" {
@@ -84,7 +84,13 @@ func createMySQLConfig(user, password string, mysqlServiceHost string,
 	}
 }
 
-var ConnectAndQueryDatabase = func(host string, log logr.Logger, port, username, password, dbname string, pemCerts []byte, extraParams map[string]string, tls string) (bool, error) {
+var ConnectAndQueryDatabase = func(
+	host string,
+	log logr.Logger,
+	port, username, password, dbname, tls string,
+	pemCerts []byte,
+	extraParams map[string]string) (bool, error) {
+
 	mysqlConfig := createMySQLConfig(
 		username,
 		password,
@@ -106,7 +112,7 @@ var ConnectAndQueryDatabase = func(host string, log logr.Logger, port, username,
 	case "true":
 		if len(pemCerts) != 0 {
 			var err error
-			tlsConfig, err = tLSClientConfig(log, pemCerts, host)
+			tlsConfig, err = tLSClientConfig(pemCerts)
 			if err != nil {
 				log.Info(fmt.Sprintf("Encountered error when processing custom ca bundle, Error: %v", err))
 				return false, err
@@ -121,6 +127,7 @@ var ConnectAndQueryDatabase = func(host string, log logr.Logger, port, username,
 		break
 	}
 
+	// Only register tls config in the case of: "true", "skip-verify", "preferred"
 	if tlsConfig != nil {
 		err := mysql.RegisterTLSConfig("custom", tlsConfig)
 		// If ExtraParams{"tls": ".."} is set, that takes precedent over mysqlConfig.TLSConfig
@@ -177,14 +184,17 @@ func (r *DSPAReconciler) isDatabaseAccessible(ctx context.Context, dsp *dspav1al
 	}
 
 	// tls can be true, false, skip-verify, preferred
-	// we default to true if it's an externalDB, false otherwise (if not specified via CustomExtraParams)
+	// we default to true if it's an externalDB, false otherwise
+	// (if not specified via CustomExtraParams)
 	tls := "false"
 	if usingExternalDB {
 		tls = "true"
 	}
 
 	// Override tls with the value in ExtraParams, if specified
-	// If users have specified a CustomExtraParams field, they may choose to leave out the "tls" param
+	// If users have specified a CustomExtraParams field, have to
+	// check for "tls" existence because users may choose to  leave
+	// out the "tls" param
 	if val, ok := extraParamsJson["tls"]; ok {
 		tls = val
 	}
@@ -196,11 +206,10 @@ func (r *DSPAReconciler) isDatabaseAccessible(ctx context.Context, dsp *dspav1al
 		params.DBConnection.Username,
 		string(decodePass),
 		params.DBConnection.DBName,
+		tls,
 		params.APICustomPemCerts,
 		extraParamsJson,
-		tls,
 	)
-
 	if err != nil {
 		log.Info(fmt.Sprintf("Unable to connect to Database: %v", err))
 		return false

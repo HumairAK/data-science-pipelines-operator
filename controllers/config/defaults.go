@@ -30,9 +30,7 @@ const (
 
 	// GlobalCaBundleConfigMapName key and label values  are a contract with
 	// ODH Platform https://github.com/opendatahub-io/architecture-decision-records/pull/28
-	GlobalCaBundleConfigMapName       = "odh-trusted-ca-bundle"
-	GlobalCaBundleConfigMapLabelKey   = "app.kubernetes.io/part-of"
-	GlobalCaBundleConfigMapLabelValue = "opendatahub-operator"
+	GlobalCaBundleConfigMapName = "odh-trusted-ca-bundle"
 
 	// GlobalCaBundleConfigMapKey is the key provided by the configmap created via OCP Cluster Network Operator
 	// https://docs.openshift.com/container-platform/4.14/networking/configuring-a-custom-pki.html#certificate-injection-using-operators_configuring-a-custom-pki

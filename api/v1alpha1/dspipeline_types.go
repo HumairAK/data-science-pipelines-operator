@@ -110,7 +110,7 @@ type APIServer struct {
 	// as values within configmaps, mapped to keys.
 	//
 	// Note that if a global cert via ODH or the User is provided in this DSPA's
-	// namespace  with the name "odh-trusted-ca-bundle", then this configmap
+	// namespace with the name "odh-trusted-ca-bundle", then that configmap
 	// is automatically used instead, and "caBundle" is ignored.
 	CABundle *CABundle `json:"cABundle,omitempty"`
 }
@@ -178,10 +178,12 @@ type Database struct {
 	// CustomExtraParams allow users to further customize the sql dsn parameters used by the Pipeline Server
 	// when opening a connection with the Database.
 	// ref: https://github.com/go-sql-driver/mysql?tab=readme-ov-file#dsn-data-source-name
+	//
 	// Value must be a JSON string. For example, to disable tls for Pipeline Server DB connection
 	// the user can provide a string: {"tls":"true"}
-	// If updating post DSPA deployment, then a manual restart of the pipeline server pod will be required so the new configmap maybe consumed
-	// Can not be used with "TLS" field.
+	//
+	// If updating post DSPA deployment, then a manual restart of the pipeline server pod will be required
+	// so the new configmap maybe consumed.
 	CustomExtraParams *string `json:"customExtraParams,omitempty"`
 
 	// Default: false

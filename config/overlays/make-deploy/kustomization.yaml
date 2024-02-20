@@ -7,5 +7,5 @@ patchesStrategicMerge:
 - img_patch.yaml
 images:
 - name: controller
-  newName: quay.io/hukhan/data-science-pipelines-operator
-  newTag: RHOAIENG-1690-2385-4
+  newName: quay.io/opendatahub/data-science-pipelines-operator
+  newTag: main
