@@ -1,35 +1,21 @@
 //go:build test_integration
 
-/*
-Copyright 2023.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
-
 package integration
 
 import (
 	"context"
 	"flag"
 	"fmt"
+	"testing"
+	"time"
+
 	"github.com/anthhub/forwarder"
 	"github.com/go-logr/logr"
 	mfc "github.com/manifestival/controller-runtime-client"
 	mf "github.com/manifestival/manifestival"
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 	dspav1alpha1 "github.com/opendatahub-io/data-science-pipelines-operator/api/v1alpha1"
-	systemsTesttUtil "github.com/opendatahub-io/data-science-pipelines-operator/tests/util"
+	systemsTestUtil "github.com/opendatahub-io/data-science-pipelines-operator/tests/util"
+	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap/zapcore"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -38,12 +24,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-	"testing"
-	"time"
-)
-
-const (
-	APIServerPort = 8888
 )
 
 var (
@@ -72,12 +52,13 @@ var (
 )
 
 const (
+	APIServerPort               = 8888
 	DefaultKubeConfigPath       = "~/.kube/config"
 	Defaultk8sApiServerHost     = "localhost:6443"
 	DefaultDSPANamespace        = "default"
-	DefaultDeployTimeout        = 240
-	DefaultPollInterval         = 2
-	DefaultDeleteTimeout        = 120
+	DefaultDeployTimeout        = 240 * time.Second
+	DefaultPollInterval         = 2 * time.Second
+	DefaultDeleteTimeout        = 120 * time.Second
 	DefaultPortforwardLocalPort = 8888
 	DefaultSkipDeploy           = false
 	DefaultSkipCleanup          = false
@@ -90,19 +71,27 @@ type ClientManager struct {
 	mfopts    mf.Option
 }
 
-// TestAPIs - This is the entry point for Ginkgo -
-// the go test runner will run this function when you run go test or ginkgo.
-// Under the hood, Ginkgo is simply calling go test.
-// You can run go test instead of the ginkgo CLI, But Ginkgo has several capabilities that can only be accessed via ginkgo.
-// It is best practice to embrace the ginkgo CLI and treat it as a first-class member of the testing toolchain.
-func TestAPIs(t *testing.T) {
-	// Single line of glue code connecting Ginkgo to Gomega
-	// Inform our matcher library (Gomega) which function to call (Ginkgo's Fail) in the event a failure is detected.
-	RegisterFailHandler(Fail)
+type IntegrationTestSuite struct {
+	suite.Suite
+	Clientmgr     ClientManager                                 // Note the capitalization to export
+	Ctx           context.Context                               // Exported and added
+	DSPANamespace string                                        // Already exported, make sure it's part of the struct
+	DSPA          *dspav1alpha1.DataSciencePipelinesApplication // Exported and added
+}
 
-	// Inform Ginkgo to start the test suite, passing it the *testing.T instance and a description of the suite.
-	// Only call RunSpecs once and let Ginkgo worry about calling *testing.T for us.
-	RunSpecs(t, "Controller Suite")
+type testLogWriter struct {
+	t *testing.T
+}
+
+func (w *testLogWriter) Write(p []byte) (n int, err error) {
+	w.t.Log(string(p))
+	return len(p), nil
+}
+
+// newTestLogWriter creates a new instance of testLogWriter
+// that adapts *testing.T to an io.Writer.
+func newTestLogWriter(t *testing.T) *testLogWriter {
+	return &testLogWriter{t: t}
 }
 
 // Register flags in an init function. This ensures they are registered _before_ `go test` calls flag.Parse()
@@ -126,81 +115,73 @@ func init() {
 	flag.BoolVar(&skipCleanup, "skipCleanup", DefaultSkipCleanup, "Skip DSPA cleanup.")
 }
 
-var _ = BeforeSuite(func() {
-	ctx, cancel = context.WithCancel(context.TODO())
+func (suite *IntegrationTestSuite) SetupSuite() {
+	fmt.Println("SetupSuite started") // Debug statement
+	loggr = logf.Log
+	ctx, cancel = context.WithCancel(context.Background())
 
 	// Initialize logger
 	opts := zap.Options{
 		Development: true,
 		TimeEncoder: zapcore.TimeEncoderOfLayout(time.RFC3339),
 	}
-	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseFlagOptions(&opts)))
+	logf.SetLogger(zap.New(zap.UseDevMode(true), zap.WriteTo(newTestLogWriter(suite.T())), zap.UseFlagOptions(&opts)))
 
-	loggr = logf.Log
 	var err error
 
-	// Register API objects
 	utilruntime.Must(dspav1alpha1.AddToScheme(scheme.Scheme))
-
 	clientmgr = ClientManager{}
 
-	// Set up client auth configs
 	cfg, err = clientcmd.BuildConfigFromFlags(k8sApiServerHost, kubeconfig)
-	Expect(err).ToNot(HaveOccurred())
+	suite.Require().NoError(err)
 
-	// Initialize Kubernetes client
 	clientmgr.k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
-	Expect(err).NotTo(HaveOccurred())
-	Expect(clientmgr.k8sClient).NotTo(BeNil())
+	suite.Require().NoError(err)
+	suite.Require().NotNil(clientmgr.k8sClient)
+
 	clientmgr.mfsClient = mfc.NewClient(clientmgr.k8sClient)
 	clientmgr.mfopts = mf.UseClient(clientmgr.mfsClient)
 
-	// Get DSPA structured
-	DSPA = systemsTesttUtil.GetDSPAFromPath(clientmgr.mfopts, DSPAPath)
+	DSPA = systemsTestUtil.GetDSPAFromPath(suite.T(), clientmgr.mfopts, DSPAPath)
 
 	if !skipDeploy {
 		loggr.Info("Deploying DSPA...")
-		systemsTesttUtil.DeployDSPA(ctx, clientmgr.k8sClient, DSPA, DSPANamespace, DeployTimeout, PollInterval)
+		systemsTestUtil.DeployDSPA(suite.T(), ctx, clientmgr.k8sClient, DSPA, DSPANamespace, DeployTimeout, PollInterval)
 		loggr.Info("Waiting for DSPA pods to ready...")
-		systemsTesttUtil.WaitForDSPAReady(ctx, clientmgr.k8sClient, DSPA.Name, DSPANamespace, DeployTimeout, PollInterval)
+		systemsTestUtil.WaitForDSPAReady(suite.T(), ctx, clientmgr.k8sClient, DSPA.Name, DSPANamespace, DeployTimeout, PollInterval)
 		loggr.Info("DSPA Deployed.")
 	}
 
-	// Forward ApiServer Service
 	loggr.Info("Setting up Portforwarding service.")
 	options := []*forwarder.Option{
 		{
-			// the local port for forwarding
-			LocalPort: PortforwardLocalPort,
-			// the k8s pod port
-			RemotePort: APIServerPort,
-			// the forwarding service name
+			LocalPort:   PortforwardLocalPort,
+			RemotePort:  APIServerPort,
 			ServiceName: fmt.Sprintf("ds-pipeline-%s", DSPA.Name),
-			// namespace default is "default"
-			Namespace: DSPANamespace,
+			Namespace:   DSPANamespace,
 		},
 	}
-	// Create a forwarder, and provide a path to kubeconfig
-	forwarderResult, err = forwarder.WithForwarders(context.Background(), options, kubeconfig)
-	Expect(err).NotTo(HaveOccurred())
-	// wait forwarding ready
+
+	forwarderResult, err = forwarder.WithForwarders(ctx, options, kubeconfig)
+	suite.Require().NoError(err)
 	_, err = forwarderResult.Ready()
-	Expect(err).NotTo(HaveOccurred())
-	loggr.Info("Portforwarding service Successfully set up.")
+	suite.Require().NoError(err)
 
 	APIServerURL = fmt.Sprintf("http://127.0.0.1:%d", PortforwardLocalPort)
+	loggr.Info("Portforwarding service Successfully set up.")
+	fmt.Println("SetupSuite completed") // Debug statement
+}
 
-	loggr.Info("Starting Test Suite.")
-})
-
-var _ = BeforeEach(func() {
-})
-
-var _ = AfterSuite(func() {
+func (suite *IntegrationTestSuite) TearDownSuite() {
 	if !skipCleanup {
-		systemsTesttUtil.DeleteDSPA(ctx, clientmgr.k8sClient, DSPA.Name, DSPANamespace, DeployTimeout, PollInterval)
+		systemsTestUtil.DeleteDSPA(suite.T(), ctx, clientmgr.k8sClient, DSPA.Name, DSPANamespace, DeployTimeout, PollInterval)
 	}
 	if forwarderResult != nil {
 		forwarderResult.Close()
 	}
-})
+	cancel()
+}
+
+func TestIntegrationTestSuite(t *testing.T) {
+	suite.Run(t, new(IntegrationTestSuite))
+}
