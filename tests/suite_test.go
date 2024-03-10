@@ -6,6 +6,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
 
@@ -102,11 +103,8 @@ func init() {
 	flag.StringVar(&DSPANamespace, "DSPANamespace", DefaultDSPANamespace, "The namespace to deploy DSPA.")
 
 	flag.DurationVar(&DeployTimeout, "DeployTimeout", DefaultDeployTimeout, "Seconds to wait for deployments. Consider increasing this on resource starved environments.")
-	DeployTimeout *= time.Second
 	flag.DurationVar(&PollInterval, "PollInterval", DefaultPollInterval, "Seconds to wait before retrying fetches to the api server.")
-	PollInterval *= time.Second
 	flag.DurationVar(&DeleteTimeout, "DeleteTimeout", DefaultDeleteTimeout, "Seconds to wait for deployment deletions. Consider increasing this on resource starved environments.")
-	DeleteTimeout *= time.Second
 
 	flag.IntVar(&PortforwardLocalPort, "PortforwardLocalPort", DefaultPortforwardLocalPort, "Local port to use for port forwarding dspa server.")
 
@@ -119,6 +117,7 @@ func (suite *IntegrationTestSuite) SetupSuite() {
 	fmt.Println("SetupSuite started") // Debug statement
 	loggr = logf.Log
 	ctx, cancel = context.WithCancel(context.Background())
+	suite.Ctx = ctx
 
 	// Initialize logger
 	opts := zap.Options{
@@ -138,19 +137,25 @@ func (suite *IntegrationTestSuite) SetupSuite() {
 	clientmgr.k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
 	suite.Require().NoError(err)
 	suite.Require().NotNil(clientmgr.k8sClient)
-
 	clientmgr.mfsClient = mfc.NewClient(clientmgr.k8sClient)
 	clientmgr.mfopts = mf.UseClient(clientmgr.mfsClient)
+	suite.Clientmgr = clientmgr
 
 	DSPA = systemsTestUtil.GetDSPAFromPath(suite.T(), clientmgr.mfopts, DSPAPath)
 
+	suite.DSPANamespace = DSPANamespace
+	suite.DSPA = DSPA
+
 	if !skipDeploy {
 		loggr.Info("Deploying DSPA...")
-		systemsTestUtil.DeployDSPA(suite.T(), ctx, clientmgr.k8sClient, DSPA, DSPANamespace, DeployTimeout, PollInterval)
+		err = systemsTestUtil.DeployDSPA(suite.T(), ctx, clientmgr.k8sClient, DSPA, DSPANamespace, DeployTimeout, PollInterval)
+		assert.NoError(suite.T(), err)
 		loggr.Info("Waiting for DSPA pods to ready...")
-		systemsTestUtil.WaitForDSPAReady(suite.T(), ctx, clientmgr.k8sClient, DSPA.Name, DSPANamespace, DeployTimeout, PollInterval)
-		loggr.Info("DSPA Deployed.")
 	}
+
+	err = systemsTestUtil.WaitForDSPAReady(suite.T(), ctx, clientmgr.k8sClient, DSPA.Name, DSPANamespace, DeployTimeout, PollInterval)
+	assert.NoError(suite.T(), err)
+	loggr.Info("DSPA Deployed.")
 
 	loggr.Info("Setting up Portforwarding service.")
 	options := []*forwarder.Option{
@@ -174,7 +179,8 @@ func (suite *IntegrationTestSuite) SetupSuite() {
 
 func (suite *IntegrationTestSuite) TearDownSuite() {
 	if !skipCleanup {
-		systemsTestUtil.DeleteDSPA(suite.T(), ctx, clientmgr.k8sClient, DSPA.Name, DSPANamespace, DeployTimeout, PollInterval)
+		err := systemsTestUtil.DeleteDSPA(suite.T(), ctx, clientmgr.k8sClient, DSPA.Name, DSPANamespace, DeployTimeout, PollInterval)
+		assert.NoError(suite.T(), err)
 	}
 	if forwarderResult != nil {
 		forwarderResult.Close()

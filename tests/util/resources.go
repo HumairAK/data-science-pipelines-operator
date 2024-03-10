@@ -120,7 +120,7 @@ func waitFor(ctx context.Context, timeout, interval time.Duration, conditionFunc
 		if err != nil {
 			return err
 		}
-		time.Sleep(interval * time.Second)
+		time.Sleep(interval)
 	}
 	return fmt.Errorf("timed out waiting for condition")
 }

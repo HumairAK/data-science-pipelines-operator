@@ -29,7 +29,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// TestDSPADeployment is now a method of IntegrationTestSuite and will have access to its fields and methods.
 func (suite *IntegrationTestSuite) TestDSPADeployment() {
 	podCount := 8
 	suite.T().Run("with default MariaDB and Minio", func(t *testing.T) {
@@ -38,7 +37,6 @@ func (suite *IntegrationTestSuite) TestDSPADeployment() {
 			listOpts := []client.ListOption{
 				client.InNamespace(suite.DSPANamespace),
 			}
-			// Use suite.clientmgr.k8sClient to access the client stored in the suite
 			err := suite.Clientmgr.k8sClient.List(suite.Ctx, podList, listOpts...)
 			require.NoError(t, err)
 			assert.Equal(t, podCount, len(podList.Items))
