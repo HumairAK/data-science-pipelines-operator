@@ -21,7 +21,7 @@ spec:
     spec:
       containers:
         - name: mariadb
-          image: registry.redhat.io/rhel8/mariadb-103:1-188
+          image: quay.io/centos7/mariadb-103-centos7:ea07c0dade9571d78a272b453fd2dea92077dc7f
           ports:
             - containerPort: 3306          
           readinessProbe:
@@ -59,16 +59,16 @@ spec:
             - name: MYSQL_ALLOW_EMPTY_PASSWORD
               value: "true"
           resources:
-            requests:
-              cpu: 300m
-              memory: 800Mi
             limits:
-              cpu: "1"
-              memory: 1Gi
+              cpu: 20m
+              memory: 500Mi
+            requests:
+              cpu: 20m
+              memory: 100m
           volumeMounts:
             - name: mariadb-persistent-storage
               mountPath: /var/lib/mysql
       volumes:
         - name: mariadb-persistent-storage
           persistentVolumeClaim:
-            claimName: mariadb
+            claimName: mariadb-test

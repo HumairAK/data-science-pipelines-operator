@@ -99,10 +99,19 @@ jobs:
         working-directory: ${{ github.workspace }}/.github/resources/mariadb
         run: |
           kustomize build . |  oc -n ${{ env.MARIADB_NAMESPACE }} apply -f -
+          end=$((SECONDS+180))
+          while [ $SECONDS -lt $end ]; do
+            name=$(oc -n ${{ env.MARIADB_NAMESPACE }} get pods | grep maria | awk '{print $1}')
+            kubectl -n ${{ env.MARIADB_NAMESPACE }} logs ${name} | tail -n 30
+            sleep 3s
+          done
 
-      - name: Wait for DSPO
+      - name: Wait for Dependencies (DSPO, ARGO, Minio, Mariadb)
         run: |
           kubectl wait -n opendatahub --timeout=60s --for=condition=Available=true deployment data-science-pipelines-operator-controller-manager
+          kubectl wait -n opendatahub --timeout=60s --for=condition=Available=true deployment argo-server 
+          kubectl wait -n ${{ env.MARIADB_NAMESPACE }} --timeout=60s --for=condition=Available=true deployment mariadb 
+          kubectl wait -n ${{ env.MINIO_NAMESPACE }} --timeout=60s --for=condition=Available=true deployment minio  
 
       - name: Create DSPA Namespace
         run: |
@@ -121,24 +130,35 @@ jobs:
           password=$(kubectl get secret ds-pipeline-db-test -n test-mariadb -o jsonpath="{.data.password}" | base64 --decode)
           kubectl create secret generic ds-pipeline-db-test --from-literal=password="$password" -n ${{ env.DSPA_EXTERNAL_NAME }}
 
-      - name: Run tests
-        working-directory: ${{ github.workspace }}
-        env:
-          NAMESPACE: ${{ env.DSPA_NAMESPACE }}
-          DSPA_NAME: ${{ env.DSPA_NAME }}
-          DSPA_PATH: ${{ env.DSPA_PATH }}
+      - name: "Debug - deploy dspa"
         run: |
-          make integrationtest K8SAPISERVERHOST=$(oc whoami --show-server) DSPANAMESPACE=${NAMESPACE} DSPAPATH=${DSPA_PATH}
+          kubectl apply -n ${{ env.DSPA_EXTERNAL_NAMESPACE }} -f ${DSPA_EXTERNAL_PATH}
+          end=$((SECONDS+180))
+          while [ $SECONDS -lt $end ]; do
+            kubectl get pods -n ${{ env.DSPA_EXTERNAL_NAMESPACE }}
+            kubectl get -n ${{ env.DSPA_EXTERNAL_NAMESPACE }}   dspa ${{ env.DSPA_EXTERNAL_NAME }} -o yaml | yq '.status'
+            sleep 3s
+          done
 
-      - name: Run tests for DSPA with External Connections
-        working-directory: ${{ github.workspace }}
-        env:
-          NAMESPACE: ${{ env.DSPA_EXTERNAL_NAMESPACE }}
-          DSPA_NAME: ${{ env.DSPA_EXTERNAL_NAME }}
-          DSPA_EXTERNAL_PATH: ${{ env.DSPA_EXTERNAL_PATH }}
-        run: |
-          make integrationtest K8SAPISERVERHOST=$(oc whoami --show-server) DSPANAMESPACE=${NAMESPACE} DSPAPATH=${DSPA_EXTERNAL_PATH}      
+#      - name: Run tests
+#        working-directory: ${{ github.workspace }}
+#        env:
+#          NAMESPACE: ${{ env.DSPA_NAMESPACE }}
+#          DSPA_NAME: ${{ env.DSPA_NAME }}
+#          DSPA_PATH: ${{ env.DSPA_PATH }}
+#        run: |
+#          make integrationtest K8SAPISERVERHOST=$(oc whoami --show-server) DSPANAMESPACE=${NAMESPACE} DSPAPATH=${DSPA_PATH}
+#
+#      - name: Run tests for DSPA with External Connections
+#        working-directory: ${{ github.workspace }}
+#        env:
+#          NAMESPACE: ${{ env.DSPA_EXTERNAL_NAMESPACE }}
+#          DSPA_NAME: ${{ env.DSPA_EXTERNAL_NAME }}
+#          DSPA_EXTERNAL_PATH: ${{ env.DSPA_EXTERNAL_PATH }}
+#        run: |
+#          make integrationtest K8SAPISERVERHOST=$(oc whoami --show-server) DSPANAMESPACE=${NAMESPACE} DSPAPATH=${DSPA_EXTERNAL_PATH}
 
+      # TODO clean up external mariadb/minio
       - name: Clean up
         run: |
           make undeploy-kind

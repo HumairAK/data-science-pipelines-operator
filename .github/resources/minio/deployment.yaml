@@ -19,11 +19,11 @@ spec:
       containers:
         - resources:
             limits:
-              cpu: 250m
-              memory: 1Gi
+              cpu: 20m
+              memory: 500Mi
             requests:
-              cpu: 200m
-              memory: 100Mi
+              cpu: 20m
+              memory: 100m
           name: minio
           env:
             - name: MINIO_ROOT_USER
