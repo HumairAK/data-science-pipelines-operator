@@ -18,7 +18,12 @@ data:
           "PostgreSQLConfig": {},
           "ConMaxLifeTime": "120s"
         },
+        "ObjectStoreConfig": {
+          "PipelinePath": "pipelines"
+        },
         "DBDriverName": "mysql",
+        "ARCHIVE_CONFIG_LOG_FILE_NAME": "main.log",
+        "ARCHIVE_CONFIG_LOG_PATH_PREFIX": "/artifacts",
         "InitConnectionTimeout": "6m"
       }
 {{ else }}
@@ -27,6 +32,9 @@ data:
           "DriverName": "mysql",
           "ConMaxLifeTime": "120s",
           "ExtraParams": {{ .DBConnection.ExtraParams }}
+        },
+        "ObjectStoreConfig": {
+          "PipelinePath": "pipelines"
         },
         "InitConnectionTimeout": "6m"
       }
