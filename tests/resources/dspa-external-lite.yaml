@@ -9,8 +9,8 @@ spec:
     enableOauth: false
     enableSamplePipeline: true
     cABundle:
-       configMapName: kube-root-ca.crt
-       configMapKey: ca.crt
+      configMapName: kube-root-ca.crt
+      configMapKey: ca.crt
     resources:
       limits:
         cpu: 20m
@@ -55,16 +55,15 @@ spec:
           cpu: 20m
           memory: 100Mi
   database:
-   customExtraParams: |- 
-    {"tls":"false"}
-   externalDB:
-     host: mariadb.test-mariadb.svc.cluster.local
-     port: "3306"
-     username: mlpipeline
-     pipelineDBName: mlpipeline
-     passwordSecret:
-       name: ds-pipeline-db-test
-       key: password
+    customExtraParams: -> {"tls":"false"}
+    externalDB:
+      host: mariadb.test-mariadb.svc.cluster.local
+      port: "3306"
+      username: mlpipeline
+      pipelineDBName: mlpipeline
+      passwordSecret:
+        name: ds-pipeline-db-test
+        key: password
   objectStorage:
     externalStorage:
       bucket: mlpipeline
