@@ -5,6 +5,8 @@ metadata:
     app: ds-pipeline-metadata-envoy-{{.Name}}
     component: data-science-pipelines
   name: ds-pipeline-metadata-envoy-{{.Name}}
+  annotations:
+    service.beta.openshift.io/serving-cert-secret-name: ds-pipelines-envoy-proxy-tls-{{.Name}}
   namespace: {{.Namespace}}
 spec:
   ports:
