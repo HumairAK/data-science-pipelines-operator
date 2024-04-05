@@ -11,6 +11,9 @@ spec:
     - name: md-envoy
       port: 9090
       protocol: TCP
+    - name: oauth2-proxy
+      port: 8443
+      protocol: TCP
   selector:
     app: ds-pipeline-metadata-envoy-{{.Name}}
     component: data-science-pipelines
