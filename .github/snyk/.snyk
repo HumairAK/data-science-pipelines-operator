@@ -1,0 +1,11 @@
+version: v1.25.0
+ignore: {}
+patch: {}
+exclude:
+  global:
+    - .github
+    - tests
+    - config/samples
+    - controllers/testdata
+    - hack
+    - scripts
