@@ -80,7 +80,7 @@ func TestExtractParams_CABundle(t *testing.T) {
 			CustomCABundleRootMountPath: "/dsp-custom-certs",
 			CustomSSLCertDir:            strPtr("/dsp-custom-certs:/etc/ssl/certs:/etc/pki/tls/certs"),
 			PiplinesCABundleMountPath:   "/dsp-custom-certs/dsp-ca.crt",
-			APICustomPemCerts:           [][]byte{[]byte("bundle-contents")},
+			APICustomPemCerts:           [][]byte{[]byte("bundle-contents"), []byte("\n")},
 			CustomCABundle:              &dspav1alpha1.CABundle{ConfigMapKey: "dsp-ca.crt", ConfigMapName: "dsp-trusted-ca-testdspa"},
 			ConfigMapPreReq: []*v1.ConfigMap{
 				{
@@ -95,7 +95,7 @@ func TestExtractParams_CABundle(t *testing.T) {
 			CustomCABundleRootMountPath: "/dsp-custom-certs",
 			CustomSSLCertDir:            strPtr("/dsp-custom-certs:/etc/ssl/certs:/etc/pki/tls/certs"),
 			PiplinesCABundleMountPath:   "/dsp-custom-certs/dsp-ca.crt",
-			APICustomPemCerts:           [][]byte{[]byte("odh-bundle-contents")},
+			APICustomPemCerts:           [][]byte{[]byte("odh-bundle-contents"), []byte("\n")},
 			CustomCABundle:              &dspav1alpha1.CABundle{ConfigMapKey: "dsp-ca.crt", ConfigMapName: "dsp-trusted-ca-testdspa"},
 			ConfigMapPreReq: []*v1.ConfigMap{
 				{
@@ -110,7 +110,7 @@ func TestExtractParams_CABundle(t *testing.T) {
 			CustomCABundleRootMountPath: "/dsp-custom-certs",
 			CustomSSLCertDir:            strPtr("/dsp-custom-certs:/etc/ssl/certs:/etc/pki/tls/certs"),
 			PiplinesCABundleMountPath:   "/dsp-custom-certs/dsp-ca.crt",
-			APICustomPemCerts:           [][]byte{[]byte("odh-bundle-contents-2")},
+			APICustomPemCerts:           [][]byte{[]byte("odh-bundle-contents-2"), []byte("\n")},
 			CustomCABundle:              &dspav1alpha1.CABundle{ConfigMapKey: "dsp-ca.crt", ConfigMapName: "dsp-trusted-ca-testdspa"},
 			ConfigMapPreReq: []*v1.ConfigMap{
 				{
@@ -140,7 +140,7 @@ func TestExtractParams_CABundle(t *testing.T) {
 			CustomCABundleRootMountPath: "/dsp-custom-certs",
 			CustomSSLCertDir:            strPtr("/dsp-custom-certs:/etc/ssl/certs:/etc/pki/tls/certs"),
 			PiplinesCABundleMountPath:   "/dsp-custom-certs/dsp-ca.crt",
-			APICustomPemCerts:           [][]byte{[]byte("odh-bundle-contents"), []byte("bundle-contents")},
+			APICustomPemCerts:           [][]byte{[]byte("odh-bundle-contents"), []byte("\n"), []byte("bundle-contents"), []byte("\n")},
 			CustomCABundle:              &dspav1alpha1.CABundle{ConfigMapKey: "dsp-ca.crt", ConfigMapName: "dsp-trusted-ca-testdspa"},
 			ConfigMapPreReq: []*v1.ConfigMap{
 				{
@@ -159,7 +159,7 @@ func TestExtractParams_CABundle(t *testing.T) {
 			CustomCABundleRootMountPath: "/dsp-custom-certs",
 			CustomSSLCertDir:            strPtr("/dsp-custom-certs:/etc/ssl/certs:/etc/pki/tls/certs"),
 			PiplinesCABundleMountPath:   "/dsp-custom-certs/dsp-ca.crt",
-			APICustomPemCerts:           [][]byte{[]byte("odh-bundle-contents"), []byte("bundle-contents"), []byte("dummycontent")},
+			APICustomPemCerts:           [][]byte{[]byte("odh-bundle-contents"), []byte("\n"), []byte("bundle-contents"), []byte("\n"), []byte("dummycontent"), []byte("\n")},
 			CustomCABundle:              &dspav1alpha1.CABundle{ConfigMapKey: "dsp-ca.crt", ConfigMapName: "dsp-trusted-ca-testdspa"},
 			ConfigMapPreReq: []*v1.ConfigMap{
 				{
@@ -180,7 +180,7 @@ func TestExtractParams_CABundle(t *testing.T) {
 			CustomCABundleRootMountPath: "/dsp-custom-certs",
 			CustomSSLCertDir:            strPtr("/dsp-custom-certs:/etc/ssl/certs:/etc/pki/tls/certs"),
 			PiplinesCABundleMountPath:   "/dsp-custom-certs/dsp-ca.crt",
-			APICustomPemCerts:           [][]byte{[]byte("service-ca-contents")},
+			APICustomPemCerts:           [][]byte{[]byte("service-ca-contents"), []byte("\n")},
 			CustomCABundle:              &dspav1alpha1.CABundle{ConfigMapKey: "dsp-ca.crt", ConfigMapName: "dsp-trusted-ca-testdspa"},
 			ConfigMapPreReq: []*v1.ConfigMap{
 				{
@@ -195,7 +195,7 @@ func TestExtractParams_CABundle(t *testing.T) {
 			CustomCABundleRootMountPath: "/dsp-custom-certs",
 			CustomSSLCertDir:            strPtr("/dsp-custom-certs:/etc/ssl/certs:/etc/pki/tls/certs"),
 			PiplinesCABundleMountPath:   "/dsp-custom-certs/dsp-ca.crt",
-			APICustomPemCerts:           [][]byte{[]byte("service-ca-contents"), []byte("dummycontent")},
+			APICustomPemCerts:           [][]byte{[]byte("service-ca-contents"), []byte("\n"), []byte("dummycontent"), []byte("\n")},
 			CustomCABundle:              &dspav1alpha1.CABundle{ConfigMapKey: "dsp-ca.crt", ConfigMapName: "dsp-trusted-ca-testdspa"},
 			ConfigMapPreReq: []*v1.ConfigMap{
 				{
