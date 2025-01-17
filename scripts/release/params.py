@@ -12,6 +12,7 @@ QUAY_REPOS = {
     "IMAGES_SCHEDULEDWORKFLOW":  "ds-pipelines-scheduledworkflow",
     "IMAGES_LAUNCHER":  "ds-pipelines-launcher",
     "IMAGES_DRIVER":  "ds-pipelines-driver",
+    "IMAGES_PIPELINESRUNTIMEGENERIC":  "ds-pipelines-runtime-generic",
 }
 
 TAGGED_REPOS = {
